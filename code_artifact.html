@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臺灣植物探險家 - 互動學習網頁</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    },
+                    animation: {
+                        'bounce-slight': 'bounceSlight 1s infinite',
+                        'pop-in': 'popIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        bounceSlight: {
+                            '0%, 100%': { transform: 'translateY(-5%)' },
+                            '50%': { transform: 'translateY(0)' },
+                        },
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f0fdf4;
+            background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%2322c55e" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+        }
+        .hide { display: none !important; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col font-sans">
+
+    <!-- Header Navigation -->
+    <header class="bg-brand-700 text-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-leaf text-2xl text-brand-100"></i>
+                <h1 class="text-xl font-bold tracking-wider">臺灣植物探險家</h1>
+            </div>
+            
+            <!-- User Stats (Hidden on Welcome Screen) -->
+            <div id="userStats" class="hide flex items-center gap-4 text-sm md:text-base bg-brand-800 px-4 py-2 rounded-full shadow-inner">
+                <div class="flex items-center gap-2">
+                    <i id="headerRoleIcon" class="fa-solid fa-user"></i>
+                    <span id="headerName" class="font-medium">學徒</span>
+                </div>
+                <div class="w-px h-4 bg-brand-600"></div>
+                <div class="flex items-center gap-2 cursor-pointer hover:text-yellow-300 transition" onclick="showScreen('badgeScreen')">
+                    <i class="fa-solid fa-medal text-yellow-400"></i>
+                    <span id="headerBadges">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 py-8 flex justify-center items-start">
+        
+        <!-- 1. Welcome & Role Selection Screen -->
+        <section id="welcomeScreen" class="w-full max-w-3xl glass-panel rounded-3xl p-8 md:p-12 text-center animate-pop-in">
+            <div class="w-24 h-24 mx-auto bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-5xl mb-6 shadow-lg">
+                <i class="fa-solid fa-seedling animate-bounce-slight"></i>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-black text-brand-800 mb-4">歡迎來到植物大探險！</h2>
+            <p class="text-lg text-gray-600 mb-8 max-w-xl mx-auto">這是一場專為臺灣自然愛好者設計的挑戰。選擇你的探險角色，透過解謎與問答，認識我們這塊土地上獨特的花草樹木，收集榮譽勳章吧！</p>
+            
+            <div class="text-left mb-6">
+                <label class="block text-brand-800 font-bold mb-2 text-lg">請問探險家尊姓大名？</label>
+                <input type="text" id="playerName" placeholder="輸入你的名字或暱稱" class="w-full px-4 py-3 rounded-xl border-2 border-brand-200 focus:border-brand-500 focus:ring-0 transition text-lg" maxlength="10">
+            </div>
+
+            <div class="text-left mb-8">
+                <label class="block text-brand-800 font-bold mb-4 text-lg">選擇你的探險職業：</label>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Role 1 -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="ranger" class="peer sr-only" checked>
+                        <div class="rounded-xl border-2 border-transparent peer-checked:border-brand-500 peer-checked:bg-brand-50 bg-white p-4 shadow-sm hover:shadow-md transition text-center">
+                            <i class="fa-solid fa-person-hiking text-4xl text-emerald-600 mb-2"></i>
+                            <h3 class="font-bold text-lg">森林巡護員</h3>
+                            <p class="text-xs text-gray-500 mt-1">熱愛戶外，雙腿就是最好的交通工具。</p>
+                        </div>
+                    </label>
+                    <!-- Role 2 -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="researcher" class="peer sr-only">
+                        <div class="rounded-xl border-2 border-transparent peer-checked:border-brand-500 peer-checked:bg-brand-50 bg-white p-4 shadow-sm hover:shadow-md transition text-center">
+                            <i class="fa-solid fa-microscope text-4xl text-blue-600 mb-2"></i>
+                            <h3 class="font-bold text-lg">植物研究員</h3>
+                            <p class="text-xs text-gray-500 mt-1">細心觀察，對各種植物特徵瞭若指掌。</p>
+                        </div>
+                    </label>
+                    <!-- Role 3 -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="photographer" class="peer sr-only">
+                        <div class="rounded-xl border-2 border-transparent peer-checked:border-brand-500 peer-checked:bg-brand-50 bg-white p-4 shadow-sm hover:shadow-md transition text-center">
+                            <i class="fa-solid fa-camera text-4xl text-purple-600 mb-2"></i>
+                            <h3 class="font-bold text-lg">生態攝影師</h3>
+                            <p class="text-xs text-gray-500 mt-1">捕捉最美瞬間，用影像記錄大自然。</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 w-full md:w-auto">
+                開始探險 <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </section>
+
+        <!-- 2. Mission Selection Screen -->
+        <section id="missionScreen" class="hide w-full max-w-4xl">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black text-brand-800 mb-2">探險地圖</h2>
+                <p class="text-gray-600">選擇你想探索的區域，完成挑戰以獲得專屬勳章！</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Mission 1 -->
+                <div class="glass-panel rounded-2xl overflow-hidden shadow-lg transform transition hover:-translate-y-2 cursor-pointer group" onclick="startMission('city')">
+                    <div class="h-40 bg-gradient-to-r from-green-300 to-green-500 flex justify-center items-center relative">
+                        <i class="fa-solid fa-tree-city text-6xl text-white opacity-80 group-hover:scale-110 transition"></i>
+                        <div class="absolute bottom-2 right-2 bg-white text-green-700 text-xs font-bold px-2 py-1 rounded-md">新手推薦</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">城市公園的秘密</h3>
+                        <p class="text-sm text-gray-600 mb-4">隱藏在我們生活周遭，街道與公園常見的植物朋友。</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-400">共 3 題</span>
+                            <span id="badge-status-city" class="text-gray-300"><i class="fa-solid fa-medal text-2xl"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mission 2 -->
+                <div class="glass-panel rounded-2xl overflow-hidden shadow-lg transform transition hover:-translate-y-2 cursor-pointer group" onclick="startMission('mountain')">
+                    <div class="h-40 bg-gradient-to-r from-emerald-500 to-teal-600 flex justify-center items-center relative">
+                        <i class="fa-solid fa-mountain text-6xl text-white opacity-80 group-hover:scale-110 transition"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">郊山步道尋寶</h3>
+                        <p class="text-sm text-gray-600 mb-4">走入淺山森林，尋找生命力旺盛的特有種與蕨類。</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-400">共 3 題</span>
+                            <span id="badge-status-mountain" class="text-gray-300"><i class="fa-solid fa-medal text-2xl"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mission 3 -->
+                <div class="glass-panel rounded-2xl overflow-hidden shadow-lg transform transition hover:-translate-y-2 cursor-pointer group" onclick="startMission('alpine')">
+                    <div class="h-40 bg-gradient-to-r from-blue-400 to-indigo-500 flex justify-center items-center relative">
+                        <i class="fa-solid fa-snowflake text-6xl text-white opacity-80 group-hover:scale-110 transition"></i>
+                        <div class="absolute bottom-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">挑戰</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">高山奇珍異草</h3>
+                        <p class="text-sm text-gray-600 mb-4">克服嚴寒與強風，生長在臺灣屋脊上的堅韌生命。</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-400">共 3 題</span>
+                            <span id="badge-status-alpine" class="text-gray-300"><i class="fa-solid fa-medal text-2xl"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <button onclick="showScreen('badgeScreen')" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition">
+                    <i class="fa-solid fa-briefcase mr-2"></i> 查看我的收集櫃
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. Quiz / Gameplay Screen -->
+        <section id="quizScreen" class="hide w-full max-w-2xl">
+            <div class="mb-4 flex justify-between items-center">
+                <button onclick="quitMission()" class="text-gray-500 hover:text-red-500 transition font-medium">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> 放棄任務
+                </button>
+                <div class="bg-brand-100 text-brand-800 px-4 py-1 rounded-full font-bold text-sm" id="quizProgress">
+                    進度: 1 / 3
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 md:p-10 shadow-xl relative animate-pop-in">
+                <!-- Hint Icon / Clue image area -->
+                <div id="questionImageContainer" class="w-full h-48 md:h-64 bg-gray-100 rounded-2xl mb-6 flex flex-col items-center justify-center border-4 border-white shadow-inner overflow-hidden relative">
+                    <i id="questionIcon" class="fa-solid fa-leaf text-6xl text-brand-400 mb-4"></i>
+                    <p id="questionClueText" class="text-center px-4 text-gray-600 italic">「尋找線索中...」</p>
+                </div>
+
+                <h3 id="questionText" class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center">
+                    題目載入中...
+                </h3>
+
+                <!-- Options -->
+                <div id="optionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Buttons generated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Result Modal (Correct/Wrong/Info) -->
+        <div id="resultModal" class="hide fixed inset-0 z-[100] bg-gray-900 bg-opacity-70 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-pop-in flex flex-col">
+                <div id="resultHeader" class="py-4 text-center text-white text-2xl font-black">
+                    <!-- Dynamic bg color and text -->
+                    正確！
+                </div>
+                <div class="p-6 md:p-8 flex-grow">
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="w-16 h-16 rounded-full bg-brand-100 flex-shrink-0 flex items-center justify-center border-2 border-brand-500">
+                            <i id="resultPlantIcon" class="fa-solid fa-seedling text-3xl text-brand-600"></i>
+                        </div>
+                        <div>
+                            <h4 id="resultPlantName" class="text-2xl font-bold text-gray-800">植物名稱</h4>
+                            <p id="resultPlantAlias" class="text-sm text-gray-500 mb-2">學名/別名</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <h5 class="font-bold text-brand-700 mb-1"><i class="fa-solid fa-book-open mr-1"></i> 探險家筆記：</h5>
+                        <p id="resultPlantInfo" class="text-gray-700 text-sm leading-relaxed">
+                            這裡是植物的詳細知識介紹。
+                        </p>
+                    </div>
+                </div>
+                <div class="bg-gray-100 p-4 text-center">
+                    <button id="nextBtn" onclick="nextQuestion()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 px-8 rounded-full shadow-md w-full transition">
+                        繼續前進 <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Mission Complete & Badge Award Modal -->
+        <div id="missionCompleteModal" class="hide fixed inset-0 z-[110] bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-md rounded-3xl p-8 text-center shadow-2xl animate-pop-in">
+                <h2 class="text-3xl font-black text-gray-800 mb-2">任務完成！</h2>
+                <p class="text-gray-600 mb-6">你成功辨識了該區域的植物！</p>
+                
+                <div class="relative w-40 h-40 mx-auto mb-6">
+                    <div class="absolute inset-0 bg-yellow-300 rounded-full animate-ping opacity-20"></div>
+                    <div class="relative w-full h-full bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full flex items-center justify-center border-4 border-yellow-100 shadow-xl">
+                        <i id="awardBadgeIcon" class="fa-solid fa-medal text-6xl text-white drop-shadow-md"></i>
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold text-yellow-600 mb-1">獲得新勳章</h3>
+                <p id="awardBadgeName" class="text-xl font-bold text-gray-800 mb-8">勳章名稱</p>
+
+                <button onclick="finishMissionAndReturn()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 px-8 rounded-full shadow-lg w-full transition">
+                    收下勳章並返回地圖
+                </button>
+            </div>
+        </div>
+
+        <!-- 6. Badge Collection Screen -->
+        <section id="badgeScreen" class="hide w-full max-w-4xl">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-black text-brand-800">探險家收集櫃</h2>
+                    <p class="text-gray-600">展示你所有的榮譽與學習成果。</p>
+                </div>
+                <button onclick="showScreen('missionScreen')" class="bg-white text-gray-700 hover:text-brand-600 border border-gray-300 font-bold py-2 px-6 rounded-full shadow-sm transition">
+                    <i class="fa-solid fa-map mr-2"></i> 回地圖
+                </button>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-8 min-h-[50vh]">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="badgeGrid">
+                    <!-- Badges injected by JS -->
+                </div>
+                
+                <div id="noBadgeMsg" class="text-center py-20 text-gray-400 flex flex-col items-center">
+                    <i class="fa-solid fa-box-open text-6xl mb-4 opacity-50"></i>
+                    <p class="text-lg">收集櫃還是空的，快去完成任務吧！</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-900 text-brand-200 py-6 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-2"><i class="fa-solid fa-seedling mr-2"></i> 臺灣植物探險家 - 互動學習網頁</p>
+            <p class="text-sm opacity-70">本網頁為教育展示用途，旨在推廣臺灣原生植物與自然生態之美。</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. State Management ---
+        const state = {
+            playerName: '',
+            role: 'ranger',
+            badges: [], // Stores mission keys completed
+            currentMission: null,
+            currentQuestionIndex: 0,
+            scoreInMission: 0
+        };
+
+        const roleConfig = {
+            ranger: { name: '森林巡護員', icon: 'fa-person-hiking' },
+            researcher: { name: '植物研究員', icon: 'fa-microscope' },
+            photographer: { name: '生態攝影師', icon: 'fa-camera' }
+        };
+
+        // --- 2. Game Data (Missions & Plants) ---
+        const missions = {
+            city: {
+                id: 'city',
+                name: '城市公園的秘密',
+                badgeName: '城市綠洲守護者勳章',
+                badgeIcon: 'fa-tree-city',
+                questions: [
+                    {
+                        clue: "「秋天時，樹冠會開滿黃色小花，接著結出像是紅色小燈籠般的果實，是常見的行道樹。」",
+                        icon: "fa-tree",
+                        color: "text-red-500",
+                        options: ["台灣欒樹", "榕樹", "黑板樹", "鳳凰木"],
+                        answer: 0,
+                        plantInfo: {
+                            name: "台灣欒樹",
+                            alias: "四色樹、燈籠樹 (特有種)",
+                            desc: "台灣特有種，一年四季有豐富的色彩變化：春天綠葉、夏天濃蔭、秋天黃花滿樹、初冬紅褐色果實，因此被稱為「四色樹」。適應力極強，是台灣非常著名的行道樹。"
+                        }
+                    },
+                    {
+                        clue: "「氣根發達，常常會長成一大片『鬍鬚』垂下來。鳥類很喜歡吃它的隱花果。」",
+                        icon: "fa-leaf",
+                        color: "text-green-800",
+                        options: ["樟樹", "榕樹", "楓香", "大葉山欖"],
+                        answer: 1,
+                        plantInfo: {
+                            name: "榕樹",
+                            alias: "正榕、鳥松",
+                            desc: "常見的常綠大喬木，會長出長長的氣生根，接觸土壤後會變粗成為支柱根。它的果實是許多都市鳥類（如白頭翁、綠繡眼）的重要食物來源。"
+                        }
+                    },
+                    {
+                        clue: "「樹皮灰白，葉子搓揉後有特殊的清香。常常被用來提煉精油，也是防蟲的好幫手。」",
+                        icon: "fa-droplet",
+                        color: "text-teal-600",
+                        options: ["樟樹", "小葉欖仁", "白千層", "木棉"],
+                        answer: 0,
+                        plantInfo: {
+                            name: "樟樹",
+                            alias: "香樟、本樟",
+                            desc: "全株具芳香氣味，樹皮有深溝縱裂紋。台灣早期是全球最重要的樟腦產地，樟樹也是許多縣市的縣市樹，是非常有台灣歷史意義的植物。"
+                        }
+                    }
+                ]
+            },
+            mountain: {
+                id: 'mountain',
+                name: '郊山步道尋寶',
+                badgeName: '淺山探索者勳章',
+                badgeIcon: 'fa-mountain',
+                questions: [
+                    {
+                        clue: "「葉片超級大，像是大象的耳朵！水滴落在葉面上會散開。注意：它的汁液有毒，不能吃喔！」",
+                        icon: "fa-umbrella",
+                        color: "text-green-600",
+                        options: ["芋頭", "山蘇", "姑婆芋", "月桃"],
+                        answer: 2,
+                        plantInfo: {
+                            name: "姑婆芋",
+                            alias: "海芋、山芋",
+                            desc: "常見於台灣低海拔山區陰暗潮濕處。全株有毒，誤食會造成口腔、喉嚨刺痛。常與可食用的芋頭混淆，分辨秘訣：水滴在姑婆芋葉面上會散開，在芋頭葉面上會形成水珠。"
+                        }
+                    },
+                    {
+                        clue: "「長得像樹一樣高大的蕨類！樹幹上有許多橢圓形的葉痕，像是蛇的鱗片。」",
+                        icon: "fa-canadian-maple-leaf",
+                        color: "text-green-900",
+                        options: ["筆筒樹", "台灣桫欏", "腎蕨", "過山蕨"],
+                        answer: 0,
+                        plantInfo: {
+                            name: "筆筒樹",
+                            alias: "蛇木",
+                            desc: "台灣特有的樹蕨，可高達十多公尺。老葉脫落後會在樹幹上留下明顯的橢圓形葉痕，排列如蛇皮。其交織的氣生根被稱為「蛇木」，常被園藝用來栽培蘭花。"
+                        }
+                    },
+                    {
+                        clue: "「開著漏斗狀的粉紅或紫紅色花朵，是春天山林裡最搶眼的主角。台灣北部陽明山有滿山遍野的景觀。」",
+                        icon: "fa-fan",
+                        color: "text-pink-500",
+                        options: ["櫻花", "金針花", "野百合", "台灣山櫻花"],
+                        answer: 3,
+                        plantInfo: {
+                            name: "台灣山櫻花",
+                            alias: "緋寒櫻 (特有種)",
+                            desc: "台灣原生種櫻花，花朵呈現下垂的鐘形，顏色為鮮豔的桃紅色。是台灣最早開花的櫻花品種，花蜜是綠繡眼、太陽鳥的最愛。"
+                        }
+                    }
+                ]
+            },
+            alpine: {
+                id: 'alpine',
+                name: '高山奇珍異草',
+                badgeName: '高山挑戰者勳章',
+                badgeIcon: 'fa-snowflake',
+                questions: [
+                    {
+                        clue: "「花瓣背面帶有酒紅色的條紋，生命力極強，從海邊到三千公尺高山都能看見它的美麗身影。」",
+                        icon: "fa-spa",
+                        color: "text-red-300",
+                        options: ["鐵炮百合", "台灣百合", "金花石蒜", "高山倒提壺"],
+                        answer: 1,
+                        plantInfo: {
+                            name: "台灣百合",
+                            alias: "高砂百合 (特有種)",
+                            desc: "台灣特有種，適應力極廣。最大特徵是花被片外面帶有酒紅色的條紋。它象徵著台灣人堅韌不拔的精神，常被作為社會運動的圖騰。"
+                        }
+                    },
+                    {
+                        clue: "「生長在海拔三千公尺的強風處。為了抵抗風雪，它的枝幹扭曲盤繞，長成如同盆景般的奇特形狀。」",
+                        icon: "fa-tree",
+                        color: "text-emerald-900",
+                        options: ["台灣冷杉", "台灣二葉松", "玉山圓柏", "紅檜"],
+                        answer: 2,
+                        plantInfo: {
+                            name: "玉山圓柏",
+                            alias: "香青",
+                            desc: "生長在台灣海拔最高處的樹木（3400公尺以上）。在避風處可長成高大喬木，但在迎風面為了抵抗強風與冰雪，會匍匐生長、枝幹扭曲，形成大自然雕塑的天然盆景。"
+                        }
+                    },
+                    {
+                        clue: "「針狀的葉子『兩根』長在一起，富含油脂。在乾燥的季節，落葉甚至會引發天然的森林火災來幫助種子發芽。」",
+                        icon: "fa-fire",
+                        color: "text-orange-500",
+                        options: ["台灣五葉松", "台灣二葉松", "柳杉", "華山松"],
+                        answer: 1,
+                        plantInfo: {
+                            name: "台灣二葉松",
+                            alias: "松柏 (特有種)",
+                            desc: "針葉兩針一束。它的樹皮和落葉富含松脂，易燃。這種特性有助於演替：大火燒毀其他植物後，二葉松的種子反而能在富含灰燼的空地上搶先發芽生長。"
+                        }
+                    }
+                ]
+            }
+        };
+
+        // --- 3. Core Functions ---
+
+        // Screen Navigation
+        function showScreen(screenId) {
+            const screens = ['welcomeScreen', 'missionScreen', 'quizScreen', 'badgeScreen'];
+            screens.forEach(id => {
+                document.getElementById(id).classList.add('hide');
+            });
+            document.getElementById(screenId).classList.remove('hide');
+            window.scrollTo(0,0);
+        }
+
+        // Custom Message Box instead of alert()
+        function showMessage(msg) {
+            // Reusing resultModal structure for simplicity, but making it just a message
+            const modal = document.getElementById('resultModal');
+            document.getElementById('resultHeader').className = 'py-4 text-center text-white text-xl font-bold bg-gray-800';
+            document.getElementById('resultHeader').innerText = '提示';
+            document.getElementById('resultPlantIcon').className = 'fa-solid fa-circle-info text-3xl text-gray-600';
+            document.getElementById('resultPlantName').innerText = msg;
+            document.getElementById('resultPlantAlias').innerText = '';
+            document.getElementById('resultPlantInfo').innerText = '請確認後再試一次喔！';
+            
+            // Adjust button to just close
+            const btn = document.getElementById('nextBtn');
+            btn.innerText = '了解';
+            btn.onclick = () => { modal.classList.add('hide'); };
+            
+            modal.classList.remove('hide');
+        }
+
+        // Start Game
+        function startGame() {
+            const nameInput = document.getElementById('playerName').value.trim();
+            if (!nameInput) {
+                showMessage("請輸入您的探險家名字！");
+                return;
+            }
+
+            const roleInput = document.querySelector('input[name="role"]:checked').value;
+            
+            state.playerName = nameInput;
+            state.role = roleInput;
+
+            // Update UI
+            document.getElementById('headerName').innerText = state.playerName;
+            document.getElementById('headerRoleIcon').className = `fa-solid ${roleConfig[state.role].icon}`;
+            document.getElementById('userStats').classList.remove('hide');
+
+            updateMapBadges();
+            showScreen('missionScreen');
+        }
+
+        function updateMapBadges() {
+            // Update badge icons on the mission selection screen based on completed missions
+            for (const key in missions) {
+                const statusSpan = document.getElementById(`badge-status-${key}`);
+                if (state.badges.includes(key)) {
+                    statusSpan.innerHTML = '<i class="fa-solid fa-medal text-2xl text-yellow-400 drop-shadow-md"></i>';
+                }
+            }
+        }
+
+        // Start Mission
+        function startMission(missionKey) {
+            state.currentMission = missions[missionKey];
+            state.currentQuestionIndex = 0;
+            state.scoreInMission = 0;
+            loadQuestion();
+            showScreen('quizScreen');
+        }
+
+        function quitMission() {
+            if(confirm('確定要放棄目前的探險嗎？進度將不會保留。')) { // standard confirm is explicitly disallowed by prompt rules. I must replace this.
+                // Wait, prompt says: "Do not use alert() and confirm() under any circumstances."
+                // I must create a custom confirm or just immediately quit. Let's just immediately quit to be safe and avoid extra modal complexity.
+                showScreen('missionScreen');
+            }
+        }
+        
+        // Custom replacement for prompt's "No confirm" rule
+        function quitMission() {
+            showScreen('missionScreen');
+        }
+
+        // Load Question
+        function loadQuestion() {
+            const q = state.currentMission.questions[state.currentQuestionIndex];
+            
+            // Update Progress
+            document.getElementById('quizProgress').innerText = `進度: ${state.currentQuestionIndex + 1} / ${state.currentMission.questions.length}`;
+
+            // Update UI Elements
+            document.getElementById('questionIcon').className = `fa-solid ${q.icon} text-6xl ${q.color} mb-4`;
+            document.getElementById('questionClueText').innerText = q.clue;
+            document.getElementById('questionText').innerText = `這個植物可能是什麼？`;
+
+            // Generate Option Buttons
+            const optsContainer = document.getElementById('optionsContainer');
+            optsContainer.innerHTML = '';
+            
+            q.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-white hover:bg-brand-50 border-2 border-brand-200 hover:border-brand-500 text-gray-700 font-bold py-4 px-6 rounded-2xl shadow-sm transition transform hover:-translate-y-1 text-lg flex justify-between items-center group';
+                btn.innerHTML = `
+                    <span>${optText}</span>
+                    <i class="fa-regular fa-circle text-gray-300 group-hover:text-brand-400"></i>
+                `;
+                btn.onclick = () => selectOption(index);
+                optsContainer.appendChild(btn);
+            });
+        }
+
+        // Select Option & Check Answer
+        function selectOption(selectedIndex) {
+            const q = state.currentMission.questions[state.currentQuestionIndex];
+            const isCorrect = (selectedIndex === q.answer);
+
+            if (isCorrect) {
+                state.scoreInMission++;
+            }
+
+            showResultInfo(isCorrect, q);
+        }
+
+        // Show Result Modal
+        function showResultInfo(isCorrect, qData) {
+            const modal = document.getElementById('resultModal');
+            const header = document.getElementById('resultHeader');
+            
+            if (isCorrect) {
+                header.className = 'py-4 text-center text-white text-2xl font-black bg-brand-500';
+                header.innerText = '答對了！🎉';
+            } else {
+                header.className = 'py-4 text-center text-white text-2xl font-black bg-orange-500';
+                header.innerText = '哎呀，猜錯了！😅';
+            }
+
+            document.getElementById('resultPlantIcon').className = `fa-solid ${qData.icon} text-3xl ${qData.color}`;
+            document.getElementById('resultPlantName').innerText = qData.plantInfo.name;
+            document.getElementById('resultPlantAlias').innerText = qData.plantInfo.alias;
+            document.getElementById('resultPlantInfo').innerText = qData.plantInfo.desc;
+
+            // Setup next button action
+            const btn = document.getElementById('nextBtn');
+            btn.onclick = nextQuestion;
+            btn.innerText = '繼續前進';
+
+            modal.classList.remove('hide');
+        }
+
+        // Proceed to next question or finish mission
+        function nextQuestion() {
+            document.getElementById('resultModal').classList.add('hide');
+            state.currentQuestionIndex++;
+
+            if (state.currentQuestionIndex < state.currentMission.questions.length) {
+                loadQuestion();
+            } else {
+                completeMission();
+            }
+        }
+
+        // Complete Mission logic
+        function completeMission() {
+            // Require 100% correct to get badge in this simple logic, or just award it anyway for encouragement.
+            // Let's award it anyway for education, but we can mention score.
+            const missionId = state.currentMission.id;
+            
+            if (!state.badges.includes(missionId)) {
+                state.badges.push(missionId);
+                document.getElementById('headerBadges').innerText = state.badges.length;
+                renderBadgeGrid(); // Update collection screen
+                updateMapBadges(); // Update map icons
+                
+                // Show badge award modal
+                document.getElementById('awardBadgeIcon').className = `fa-solid ${state.currentMission.badgeIcon} text-6xl text-white drop-shadow-md`;
+                document.getElementById('awardBadgeName').innerText = state.currentMission.badgeName;
+                document.getElementById('missionCompleteModal').classList.remove('hide');
+            } else {
+                // Already has badge, just show a message and return
+                const modal = document.getElementById('resultModal');
+                document.getElementById('resultHeader').className = 'py-4 text-center text-white text-2xl font-bold bg-blue-500';
+                document.getElementById('resultHeader').innerText = '複習完成！';
+                document.getElementById('resultPlantIcon').className = 'fa-solid fa-rotate-right text-3xl text-blue-600';
+                document.getElementById('resultPlantName').innerText = '溫故知新';
+                document.getElementById('resultPlantAlias').innerText = '';
+                document.getElementById('resultPlantInfo').innerText = `你在「${state.currentMission.name}」答對了 ${state.scoreInMission} 題！繼續保持對大自然的好奇心。`;
+                
+                const btn = document.getElementById('nextBtn');
+                btn.innerText = '返回地圖';
+                btn.onclick = () => {
+                    modal.classList.add('hide');
+                    showScreen('missionScreen');
+                };
+                modal.classList.remove('hide');
+            }
+        }
+
+        function finishMissionAndReturn() {
+            document.getElementById('missionCompleteModal').classList.add('hide');
+            showScreen('missionScreen');
+        }
+
+        // Render Badge Collection
+        function renderBadgeGrid() {
+            const grid = document.getElementById('badgeGrid');
+            const noMsg = document.getElementById('noBadgeMsg');
+            
+            grid.innerHTML = '';
+            
+            if (state.badges.length === 0) {
+                noMsg.classList.remove('hide');
+            } else {
+                noMsg.classList.add('hide');
+                
+                state.badges.forEach(missionId => {
+                    const m = missions[missionId];
+                    const badgeDiv = document.createElement('div');
+                    badgeDiv.className = 'flex flex-col items-center p-4 bg-white rounded-2xl shadow-md border border-gray-100 animate-pop-in';
+                    badgeDiv.innerHTML = `
+                        <div class="w-20 h-20 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full flex items-center justify-center border-4 border-yellow-100 shadow-inner mb-3">
+                            <i class="fa-solid ${m.badgeIcon} text-3xl text-white"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 text-center text-sm">${m.badgeName}</h4>
+                        <p class="text-xs text-gray-500 mt-1">${m.name}</p>
+                    `;
+                    grid.appendChild(badgeDiv);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
